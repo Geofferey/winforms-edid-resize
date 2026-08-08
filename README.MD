@@ -8,8 +8,8 @@ The original tool ([migueltek.com/tool/simple-edid-editor-for-win-11](https://mi
 
 Windows 11 chooses the virtual keyboard mode based on the screen's reported physical size:
 
-- **Under 18 inches** — keyboard is locked to *undocking mode* with a small layout.
-- **18 inches or larger** — keyboard cannot use *docking mode* at all.
+- **Under 18 inches** — keyboard defaults to *docked* with ability to compact *undock* + resize workspace
+- **Above 18 inches** — keyboard defaults to *float*, cannot use *docking mode* or resize workspace
 
 This tool overrides the EDID data Windows reads for your display so you can nudge the reported diagonal size below the 18" threshold to unlock docked mode.
 
@@ -30,7 +30,7 @@ Because it edits the registry directly, it requires Administrator privileges. Th
 
 ## Requirements
 
-- Windows 11
+- Intended for Windows 11
 - Administrator access
 
 ## Usage
@@ -41,6 +41,17 @@ Because it edits the registry directly, it requires Administrator privileges. Th
 4. Apply the change to write the `EDID_OVERRIDE` registry value.
 5. Restart your computer for the change to take effect.
 6. To revert, use the app's remove/restore option (or delete the `EDID_OVERRIDE` value) and restart.
+
+## Windows 10
+
+Windows 10 requires a different method to enable docked keyboard + resizable workspace
+
+1. Download [CRU](https://www.monitortests.com/forum/Thread-Custom-Resolution-Utility-CRU) (Custom Resolution Utillity)
+2. Launch the utility 
+3. Delete all standard resolutions
+4. Delete all detailed resolutions
+5. Established resolutions, select None
+6. Reboot
 
 ## Warnings
 
