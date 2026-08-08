@@ -322,14 +322,20 @@ function Add-Label($text, $x, $refY, $width = 720, $bold = $false) {
 }
 
 # --- Notice banner ---
+# AutoSize + Min/MaxSize pins the width at 720 and lets the height grow/shrink to
+# exactly fit the wrapped text - avoids guessing a fixed height that could clip a
+# line (or waste space) if font metrics differ slightly once packaged via ps2exe.
 $noticeBox = New-Object System.Windows.Forms.Label
 $noticeBox.Text = "Notice: EDID Override can cause your device/monitor to misbehave. Selecting a detected monitor automatically backs up its registry key to .\Backups before any change. Read the backup / warnings before applying. You are responsible for any damage caused by using this tool."
-$noticeBox.Location = New-Object System.Drawing.Point(10, $y)
-$noticeBox.Size = New-Object System.Drawing.Size(720, 45)
 $noticeBox.BackColor = [System.Drawing.Color]::LightYellow
 $noticeBox.BorderStyle = 'FixedSingle'
+$noticeBox.Padding = New-Object System.Windows.Forms.Padding(4)
+$noticeBox.MinimumSize = New-Object System.Drawing.Size(720, 0)
+$noticeBox.MaximumSize = New-Object System.Drawing.Size(720, 0)
+$noticeBox.AutoSize = $true
+$noticeBox.Location = New-Object System.Drawing.Point(10, $y)
 $form.Controls.Add($noticeBox)
-$y += 55
+$y += $noticeBox.Height + 10
 
 # --- Monitor detection group ---
 $gbMonitor = New-Object System.Windows.Forms.GroupBox
@@ -360,59 +366,67 @@ $lblBackupPath = New-Object System.Windows.Forms.Label
 $lblBackupPath.Text = '(no backup yet)'
 $lblBackupPath.Location = New-Object System.Drawing.Point(280, 60)
 $lblBackupPath.Size = New-Object System.Drawing.Size(420, 18)
+$lblBackupPath.AutoEllipsis = $true
 $gbMonitor.Controls.Add($lblBackupPath)
 $y += 105
 
 $btnOpenReg = New-Object System.Windows.Forms.Button
 $btnOpenReg.Text = 'Advanced: open a .reg file instead...'
 $btnOpenReg.Location = New-Object System.Drawing.Point(10, $y)
-$btnOpenReg.Size = New-Object System.Drawing.Size(280, 26)
+$btnOpenReg.Size = New-Object System.Drawing.Size(300, 26)
 $form.Controls.Add($btnOpenReg)
 
 $lblLoadedFile = New-Object System.Windows.Forms.Label
 $lblLoadedFile.Text = '(export/import only - not from this PC live)'
-$lblLoadedFile.Location = New-Object System.Drawing.Point(300, ($y + 5))
-$lblLoadedFile.Size = New-Object System.Drawing.Size(430, 18)
+$lblLoadedFile.Location = New-Object System.Drawing.Point(320, ($y + 5))
+$lblLoadedFile.Size = New-Object System.Drawing.Size(410, 18)
 $lblLoadedFile.ForeColor = [System.Drawing.Color]::DimGray
+$lblLoadedFile.AutoEllipsis = $true
 $form.Controls.Add($lblLoadedFile)
 $y += 36
 
-# --- Warning labels ---
+# --- Warning labels (auto-sized: see notice banner comment above) ---
 $lblWarnChecksum = New-Object System.Windows.Forms.Label
 $lblWarnChecksum.Text = "! Warning: This EDID data contains an invalid checksum - either the EDID is corrupt or this tool doesn't support its EDID revision. Consider using another EDID editor."
-$lblWarnChecksum.Location = New-Object System.Drawing.Point(10, $y)
-$lblWarnChecksum.Size = New-Object System.Drawing.Size(720, 34)
 $lblWarnChecksum.BackColor = [System.Drawing.Color]::Yellow
+$lblWarnChecksum.Padding = New-Object System.Windows.Forms.Padding(4)
+$lblWarnChecksum.MinimumSize = New-Object System.Drawing.Size(720, 0)
+$lblWarnChecksum.MaximumSize = New-Object System.Drawing.Size(720, 0)
+$lblWarnChecksum.AutoSize = $true
 $lblWarnChecksum.Visible = $false
+$script:WarningsBaseY = $y
+$lblWarnChecksum.Location = New-Object System.Drawing.Point(10, $script:WarningsBaseY)
 $form.Controls.Add($lblWarnChecksum)
-$y += 38
 
 $lblWarnOverride = New-Object System.Windows.Forms.Label
 $lblWarnOverride.Text = "! Warning: This monitor already has EDID Override data set (by the OEM or manually). The information shown below may be inaccurate; remove the existing override, reboot, and reload."
-$lblWarnOverride.Location = New-Object System.Drawing.Point(10, $y)
-$lblWarnOverride.Size = New-Object System.Drawing.Size(720, 34)
 $lblWarnOverride.BackColor = [System.Drawing.Color]::Yellow
+$lblWarnOverride.Padding = New-Object System.Windows.Forms.Padding(4)
+$lblWarnOverride.MinimumSize = New-Object System.Drawing.Size(720, 0)
+$lblWarnOverride.MaximumSize = New-Object System.Drawing.Size(720, 0)
+$lblWarnOverride.AutoSize = $true
 $lblWarnOverride.Visible = $false
+$lblWarnOverride.Location = New-Object System.Drawing.Point(10, $script:WarningsBaseY)
 $form.Controls.Add($lblWarnOverride)
-$y += 38
-
-$y += 8
 
 # --- Original EDID info group ---
 $gbOriginal = New-Object System.Windows.Forms.GroupBox
 $gbOriginal.Text = 'Original EDID information of the display'
 $gbOriginal.Location = New-Object System.Drawing.Point(10, $y)
-$gbOriginal.Size = New-Object System.Drawing.Size(720, 100)
+$gbOriginal.Size = New-Object System.Drawing.Size(720, 88)
 $form.Controls.Add($gbOriginal)
 
 $innerY = [ref]20
 $lblDeviceInstancePath = Add-Label 'Device Instance Path: (none)' 10 $innerY 690
+$lblDeviceInstancePath.AutoEllipsis = $true
 $gbOriginal.Controls.Add($lblDeviceInstancePath)
 $lblOrigPhysicalSize = Add-Label 'Screen physical dimension (Windows uses this): (none)' 10 $innerY 690
+$lblOrigPhysicalSize.AutoEllipsis = $true
 $gbOriginal.Controls.Add($lblOrigPhysicalSize)
 $lblOrigPtmSize = Add-Label 'PTM screen dimension: (none)' 10 $innerY 690
+$lblOrigPtmSize.AutoEllipsis = $true
 $gbOriginal.Controls.Add($lblOrigPtmSize)
-$y += 110
+$y += 98
 
 # --- PTM resolution group ---
 $gbPtm = New-Object System.Windows.Forms.GroupBox
@@ -449,11 +463,14 @@ $gbPtm.Controls.Add($numVPixel)
 
 $lblPtmTip = New-Object System.Windows.Forms.Label
 $lblPtmTip.Text = 'Note: the PTM resolution here is only used to keep the aspect ratio consistent; it is not written back to the EDID.'
-$lblPtmTip.Location = New-Object System.Drawing.Point(10, 55)
-$lblPtmTip.Size = New-Object System.Drawing.Size(690, 30)
 $lblPtmTip.ForeColor = [System.Drawing.Color]::DimGray
+$lblPtmTip.MinimumSize = New-Object System.Drawing.Size(690, 0)
+$lblPtmTip.MaximumSize = New-Object System.Drawing.Size(690, 0)
+$lblPtmTip.AutoSize = $true
+$lblPtmTip.Location = New-Object System.Drawing.Point(10, 55)
 $gbPtm.Controls.Add($lblPtmTip)
-$y += 100
+$gbPtm.Size = New-Object System.Drawing.Size(720, ($lblPtmTip.Bottom + 10))
+$y += $gbPtm.Height + 10
 
 # --- New size group ---
 $gbNew = New-Object System.Windows.Forms.GroupBox
@@ -485,29 +502,33 @@ $gbNew.Controls.Add($chkModifyPtm)
 
 $lblNewTip = New-Object System.Windows.Forms.Label
 $lblNewTip.Text = 'Windows 11 forces the touch keyboard to undock at >=18 inches; dock mode is available below 18 inches (observed as a truncation, not rounding).'
-$lblNewTip.Location = New-Object System.Drawing.Point(10, 80)
-$lblNewTip.Size = New-Object System.Drawing.Size(690, 30)
 $lblNewTip.ForeColor = [System.Drawing.Color]::DimGray
+$lblNewTip.MinimumSize = New-Object System.Drawing.Size(690, 0)
+$lblNewTip.MaximumSize = New-Object System.Drawing.Size(690, 0)
+$lblNewTip.AutoSize = $true
+$lblNewTip.Location = New-Object System.Drawing.Point(10, 80)
 $gbNew.Controls.Add($lblNewTip)
 
 $lblNewSize = New-Object System.Windows.Forms.Label
 $lblNewSize.Text = 'New screen dimension in EDID: (none)'
-$lblNewSize.Location = New-Object System.Drawing.Point(10, 108)
+$lblNewSize.AutoEllipsis = $true
+$lblNewSize.Location = New-Object System.Drawing.Point(10, ($lblNewTip.Bottom + 6))
 $lblNewSize.Size = New-Object System.Drawing.Size(690, 20)
 $lblNewSize.Font = New-Object System.Drawing.Font($form.Font, [System.Drawing.FontStyle]::Bold)
 $gbNew.Controls.Add($lblNewSize)
-$y += 140
+$gbNew.Size = New-Object System.Drawing.Size(720, ($lblNewSize.Bottom + 10))
+$y += $gbNew.Height + 10
 
 # --- Hex view group ---
 $gbHex = New-Object System.Windows.Forms.GroupBox
 $gbHex.Text = 'Hex view (red = differs from original)'
 $gbHex.Location = New-Object System.Drawing.Point(10, $y)
-$gbHex.Size = New-Object System.Drawing.Size(720, 260)
+$gbHex.Size = New-Object System.Drawing.Size(720, 270)
 $form.Controls.Add($gbHex)
 
 $dgvHex = New-Object System.Windows.Forms.DataGridView
 $dgvHex.Location = New-Object System.Drawing.Point(10, 25)
-$dgvHex.Size = New-Object System.Drawing.Size(690, 195)
+$dgvHex.Size = New-Object System.Drawing.Size(690, 205)
 $dgvHex.ColumnCount = 16
 $dgvHex.RowHeadersWidth = 45
 $dgvHex.AllowUserToAddRows = $false
@@ -519,7 +540,7 @@ $dgvHex.RowHeadersVisible = $true
 $dgvHex.ColumnHeadersHeightSizeMode = 'DisableResizing'
 $dgvHex.SelectionMode = 'CellSelect'
 $dgvHex.Font = New-Object System.Drawing.Font('Consolas', 9)
-$dgvHex.ScrollBars = 'None'
+$dgvHex.ScrollBars = 'Vertical'
 for ($c = 0; $c -lt 16; $c++) {
     $dgvHex.Columns[$c].Name = ConvertTo-HexByte $c
     $dgvHex.Columns[$c].HeaderText = ($dgvHex.Columns[$c].Name).ToUpperInvariant()
@@ -534,16 +555,16 @@ $gbHex.Controls.Add($dgvHex)
 
 $btnCopyHex = New-Object System.Windows.Forms.Button
 $btnCopyHex.Text = 'Copy to clipboard'
-$btnCopyHex.Location = New-Object System.Drawing.Point(10, 225)
+$btnCopyHex.Location = New-Object System.Drawing.Point(10, 235)
 $btnCopyHex.Size = New-Object System.Drawing.Size(150, 26)
 $gbHex.Controls.Add($btnCopyHex)
-$y += 270
+$y += 280
 
 # --- Apply directly to registry (primary path, live monitors only) ---
 $gbApply = New-Object System.Windows.Forms.GroupBox
 $gbApply.Text = '2. Apply directly to the registry (requires reboot / monitor reconnect)'
 $gbApply.Location = New-Object System.Drawing.Point(10, $y)
-$gbApply.Size = New-Object System.Drawing.Size(720, 70)
+$gbApply.Size = New-Object System.Drawing.Size(720, 64)
 $form.Controls.Add($gbApply)
 
 $btnApplyOverride = New-Object System.Windows.Forms.Button
@@ -559,13 +580,13 @@ $btnRemoveOverride.Location = New-Object System.Drawing.Point(280, 25)
 $btnRemoveOverride.Size = New-Object System.Drawing.Size(260, 32)
 $btnRemoveOverride.Enabled = $false
 $gbApply.Controls.Add($btnRemoveOverride)
-$y += 80
+$y += 74
 
 # --- Manual export (fallback / sharing) ---
 $gbExport = New-Object System.Windows.Forms.GroupBox
 $gbExport.Text = 'Advanced: export as .reg files instead (manual import)'
 $gbExport.Location = New-Object System.Drawing.Point(10, $y)
-$gbExport.Size = New-Object System.Drawing.Size(720, 70)
+$gbExport.Size = New-Object System.Drawing.Size(720, 64)
 $form.Controls.Add($gbExport)
 
 $btnSaveOverride = New-Object System.Windows.Forms.Button
@@ -581,7 +602,32 @@ $btnSaveRemoval.Location = New-Object System.Drawing.Point(360, 25)
 $btnSaveRemoval.Size = New-Object System.Drawing.Size(350, 32)
 $btnSaveRemoval.Enabled = $false
 $gbExport.Controls.Add($btnSaveRemoval)
-$y += 80
+$y += 74
+
+# The checksum/override warning banners are hidden most of the time. Rather than
+# always reserving their height (dead gap when hidden), everything below them
+# starts right after the "open a .reg file" row; when a warning becomes visible
+# this shifts it back down to make room, and shifts it back up when hidden.
+$script:GroupBoxesBelowWarnings = @($gbOriginal, $gbPtm, $gbNew, $gbHex, $gbApply, $gbExport)
+$script:OriginalGroupBoxTops = @{}
+foreach ($gb in $script:GroupBoxesBelowWarnings) { $script:OriginalGroupBoxTops[$gb] = $gb.Top }
+
+function Update-WarningLayout {
+    $yy = $script:WarningsBaseY
+    if ($lblWarnChecksum.Visible) {
+        $lblWarnChecksum.Top = $yy
+        $yy += $lblWarnChecksum.Height + 8
+    }
+    if ($lblWarnOverride.Visible) {
+        $lblWarnOverride.Top = $yy
+        $yy += $lblWarnOverride.Height + 8
+    }
+    $delta = $yy - $script:WarningsBaseY
+    foreach ($gb in $script:GroupBoxesBelowWarnings) {
+        $gb.Top = $script:OriginalGroupBoxTops[$gb] + $delta
+    }
+    $form.PerformLayout()
+}
 
 # ----------------------------------------------------------------------------
 # Behaviour
@@ -631,6 +677,7 @@ function Reset-App {
 
     $lblWarnChecksum.Visible = $false
     $lblWarnOverride.Visible = $false
+    Update-WarningLayout
 
     $lblDeviceInstancePath.Text = 'Device Instance Path: (none)'
     $lblOrigPhysicalSize.Text = 'Screen physical dimension (Windows uses this): (none)'
@@ -668,6 +715,7 @@ function Import-EdidBlock0([byte[]]$edidData) {
 
     if (-not (Test-EdidChecksum $script:OriginalEdidBlock0)) {
         $lblWarnChecksum.Visible = $true
+        Update-WarningLayout
     }
 
     $header = $script:OriginalEdidBlock0[0..7]
@@ -748,6 +796,7 @@ $btnLoadMonitor.Add_Click({
 
     if (Test-EdidOverrideExists $sel.InstanceId) {
         $lblWarnOverride.Visible = $true
+        Update-WarningLayout
     }
 
     if (Import-EdidBlock0 $edidBytes) {
@@ -781,7 +830,7 @@ $btnOpenReg.Add_Click({
     $script:CanWriteRegistryLive = $false   # never write directly for a file loaded this way
     $lblLoadedFile.Text = "Loaded from file: $([System.IO.Path]::GetFileName($dlg.FileName)) (export/import only)"
 
-    if ($parsed.IsEdidOverridden) { $lblWarnOverride.Visible = $true }
+    if ($parsed.IsEdidOverridden) { $lblWarnOverride.Visible = $true; Update-WarningLayout }
 
     Import-EdidBlock0 $parsed.EdidData | Out-Null
     # Apply/Remove-to-registry stay disabled: this data may not even be for this machine's current device.
